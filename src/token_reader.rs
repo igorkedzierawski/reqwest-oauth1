@@ -1,6 +1,5 @@
 use std::{collections::HashMap, future::Future};
 
-use async_trait::async_trait;
 use reqwest::Response;
 use serde::Deserialize;
 
@@ -24,12 +23,10 @@ pub struct TokenResponse {
 
 /// Add parse_oauth_token feature to reqwest::Response.
 // this trait is sealed
-#[async_trait(?Send)]
 pub trait TokenReader: private::Sealed {
-    async fn parse_oauth_token(self) -> Result<TokenResponse>;
+    fn parse_oauth_token(self) -> impl Future<Output = Result<TokenResponse>>;
 }
 
-#[async_trait(?Send)]
 impl TokenReader for Response {
     async fn parse_oauth_token(self) -> Result<TokenResponse> {
         let text = self.text().await?;
@@ -41,9 +38,8 @@ impl TokenReader for Response {
 
 /// Add parse_oauth_token feature to Future of reqwest::Response.
 // this trait is also sealed
-#[async_trait(?Send)]
 pub trait TokenReaderFuture: private::SealedWrapper {
-    async fn parse_oauth_token(self) -> Result<TokenResponse>;
+    fn parse_oauth_token(self) -> impl Future<Output = Result<TokenResponse>>;
 }
 
 /*
@@ -58,7 +54,6 @@ where
 }
 */
 
-#[async_trait(?Send)]
 impl<T, E> TokenReaderFuture for T
 where
     T: Future<Output = std::result::Result<Response, E>>,
